@@ -199,22 +199,30 @@ def convert(dataTuple):
     print(nwbfile)
 
     # Trying to add another Units table to hold the results of the automatic spike sorting
-    spike_templates = matfile['sp'][0]['spikeTemplates'][0]
+    spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
     spike_template_ids = np.unique(spike_templates)
+
+    # way to add TemplateUnits as acquisition
     #template_units = Units(name='TemplateUnits',
     #                       description='units assigned during automatic spike sorting')
+    ##nwbfile.add_acquisition(template_units)
+
+    # way to add TemplateUnits as ProcessingModule
+    # I'm trying to .add_unit directly to the ProcessingModule because I didn't see
+    # any methods like nwbfile.add_processingmodule (like how there is nwbfile.add_acquisition)
+    # However, I get the error that I can't .add_unit() to a ProcessingModule, so I think I am missing something
     from pynwb import ProcessingModule
     spike_template_module = ProcessingModule(name='TemplateUnits',
-                                      description='units assigned during automatic spike sorting')
+                                             description='units assigned during automatic spike sorting (psy)')
 
     for i, spike_template_id in enumerate(spike_template_ids):
         template_spike_times = spike_times[spike_templates == spike_template_id]
+        print(template_spike_times)
         spike_template_module.add_unit(id=int(spike_template_id),
                                 spike_times=template_spike_times,
                                 electrode_group=electrode_group)
 
-    nwbfile.ad
-    #nwbfile.add_acquisition(template_units)
+
 
     with NWBHDF5IO(out_path, 'w') as io:
         io.write(nwbfile)
