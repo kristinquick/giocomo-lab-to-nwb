@@ -9,6 +9,7 @@ from pynwb.misc import Units
 
 def convert(dataTuple):
 
+    # General experiment settings
     input_file = dataTuple[0]
     print("input file = ", input_file)
     subject_id = dataTuple[1]
@@ -61,31 +62,34 @@ def convert(dataTuple):
 
     uuid_identifier = uuid.uuid1()
 
-    # General experiment settings
-    """
-    subject_id=
-    subject_date_of_birth =
-    subject_sex =
-    subject_species =
-    subject_description = 
-    subject_weight =
-    session_id= 'npI5_0417_baseline_1'
-    session_start_time =
-    experimenter =
-    experiment_description =
-    lab_name =
-    institution =
-    """
-
     # Create NWB file
     nwbfile = NWBFile(session_description='demonstrate NWBFile basics',  # required
                       identifier=uuid_identifier.hex,  # required
-                      session_id='0417',
+                      session_id=session_id,
+                      experiment_description=experiment_description,
+                      experimenter=experimenter,
+                      institution=institution,
+                      lab=lab_name,
                       session_start_time=start_time_tz,  # required
                       file_create_date=create_date_tz)  # optional
     print(nwbfile)
-    print(create_date)
-    print(start_time)
+
+    # add information about the subject of the experiment
+    from pynwb.file import Subject
+
+    birthday = datetime(2019, 1, 1)  # start of experiment
+    birthday_tz = timezone_cali.localize(birthday)
+
+    experiment_subject = Subject(subject_id=subject_id,
+                                 species=subject_species,
+                                 description=subject_description,
+                                 date_of_birth=birthday_tz,
+                                 weight='11',
+                                 sex=subject_sex)
+
+    nwbfile.subject = experiment_subject
+
+    print(nwbfile.subject)
 
     # Adding trial information
     nwbfile.add_trial_column('trial_contrast', 'visual contrast of the maze through which the mouse is running')
@@ -119,7 +123,6 @@ def convert(dataTuple):
     physical_posx = position_virtual
     trial_gain = np.ravel(matfile['trial_gain'])
     for num in trial_nums:
-        print(num,trial_gain[num-1])
         physical_posx[trial == num] = physical_posx[trial == num]/trial_gain[num-1]
 
     position.create_spatial_series(name='PhysicalPosition',
@@ -202,26 +205,26 @@ def convert(dataTuple):
     spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
     spike_template_ids = np.unique(spike_templates)
 
-    # way to add TemplateUnits as acquisition
-    #template_units = Units(name='TemplateUnits',
-    #                       description='units assigned during automatic spike sorting')
-    ##nwbfile.add_acquisition(template_units)
-
-    # way to add TemplateUnits as ProcessingModule
-    # I'm trying to .add_unit directly to the ProcessingModule because I didn't see
-    # any methods like nwbfile.add_processingmodule (like how there is nwbfile.add_acquisition)
-    # However, I get the error that I can't .add_unit() to a ProcessingModule, so I think I am missing something
-    from pynwb import ProcessingModule
-    spike_template_module = ProcessingModule(name='TemplateUnits',
-                                             description='units assigned during automatic spike sorting (psy)')
+    # create TemplateUnits units table
+    template_units = Units(name='TemplateUnits',
+                          description='units assigned during automatic spike sorting')
 
     for i, spike_template_id in enumerate(spike_template_ids):
         template_spike_times = spike_times[spike_templates == spike_template_id]
-        print(template_spike_times)
-        spike_template_module.add_unit(id=int(spike_template_id),
+        template_units.add_unit(id=int(spike_template_id),
                                 spike_times=template_spike_times,
                                 electrode_group=electrode_group)
 
+    # add TemplateUnits table to a processing module
+    from pynwb import ProcessingModule
+    spike_template_module = ProcessingModule(name='TemplateUnits',
+                                             description='units assigned during automatic spike sorting')
+
+    # add spike_template_module (processing module) to the NWB file
+    spike_template_module.add(template_units)
+    nwbfile.add_processing_module(spike_template_module)
+
+    print(nwbfile)
 
 
     with NWBHDF5IO(out_path, 'w') as io:
