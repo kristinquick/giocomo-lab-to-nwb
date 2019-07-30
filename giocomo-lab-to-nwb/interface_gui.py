@@ -6,7 +6,6 @@ import os.path
 import conversion
 
 
-
 def center(win):
     """
     centers a tkinter window
@@ -192,7 +191,7 @@ class guiMain():
                          self.descriptionVar.get() ,
                          self.enterSessionInst.get(),
                          self.enterSessionLab.get())
-        conversion.convert(self.gio_tuple)
+        conversion.convert(*self.gio_tuple)
 
 
 

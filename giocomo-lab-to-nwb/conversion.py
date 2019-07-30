@@ -7,34 +7,59 @@ import pytz
 from pynwb import NWBFile, NWBHDF5IO
 from pynwb.misc import Units
 
-def convert(dataTuple):
+def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_species,
+             subject_weight, session_id, session_start_time, experimenter, experiment_description, institution,
+             lab_name):
+    """
+    Read in the .mat file specified by input_file and convert to .nwb format.
+
+    Parameters
+    ----------
+    input_file : ndarray (..., n_channels, n_time)
+        the .mat file to be converted
+    subject_id : string
+        the unique subject ID number for the subject of the experiment
+    subject_date_of_birth : datetime ISO 8601
+        the date and time the subject was born
+    subject_description : string
+        important information specific to this subject that differentiates it from other members of it's species
+    subject_sex : string
+        Male or Female
+    subject_species : string
+        the name of the species of the subject
+    subject_weight :
+        the weight of the subject around the time of the experiment
+    session_id: string
+        human-readable ID# for the experiment sesssion that has a one-to-one relationship with a recording session
+    session_start_time : datetime
+        date and time that the experiment started
+    experimenter : string
+        who ran the experiment, first and last name
+    experiment_description : string
+        what was happening during the experiment
+    institution : string
+        what institution was the experiment performed in
+
+    Returns
+    -------
+    nwbfile : NWBFile
+        The contents of the .mat file converted into the NWB format.  The nwbfile is saved to disk using NDWHDF5
+    """
+
 
     # General experiment settings
-    input_file = dataTuple[0]
     print("input file = ", input_file)
-    subject_id = dataTuple[1]
     print("subject id = ", subject_id)
-    subject_date_of_birth = dataTuple[2]
     print("subject date of birth = ", subject_date_of_birth)
-    subject_description = dataTuple[3]
     print("subject_description = ", subject_description)
-    subject_sex = dataTuple[4]
     print("subject sex = ", subject_sex)
-    subject_species = dataTuple[5]
     print("subject species = ", subject_species)
-    subject_weight = dataTuple[6]
     print("subject weight = ", subject_weight)
-    session_id = dataTuple[7]
     print("session id = ", session_id)
-    session_start_time = dataTuple[8]
     print("session start time = ", session_start_time)
-    experimenter = dataTuple[9]
     print("experimenter = ", experimenter)
-    experiment_description = dataTuple[10]
     print("experiment_description = ", experiment_description)
-    institution = dataTuple[11]
     print("institution = ", institution)
-    lab_name = dataTuple[12]
     print("lab name = ", lab_name, "\n")
 
     # input matlab data
@@ -210,7 +235,7 @@ def convert(dataTuple):
                          waveform_mean=waveforms,
                          electrode_group=electrode_group)
 
-    #print(nwbfile.units[4].VectorData)
+    print(nwbfile.units['waveform_mean'][4].shape)
 
     # Trying to add another Units table to hold the results of the automatic spike sorting
     spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
