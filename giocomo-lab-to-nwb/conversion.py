@@ -153,7 +153,7 @@ def convert(dataTuple):
     recording_device = nwbfile.create_device(name='neuropixel_probes')
     electrode_group_description = 'single neuropixels probe http://www.open-ephys.org/neuropixelscorded'
     electrode_group_name = 'probe1'
-    electrode_group_location = 'somewhere in visual area 1 (V1)'
+    electrode_group_location = 'medial entorhinal cortex'
 
     electrode_group = nwbfile.create_electrode_group(electrode_group_name,
                                                      description=electrode_group_description,
@@ -171,15 +171,25 @@ def convert(dataTuple):
 
     num_recording_electrodes = xcoords.shape[0]
     recording_electrodes = range(0, num_recording_electrodes)
+
+    # create electrode columns for the x,y location on the neuropixel  probe
+    # the standard x,y,z locations are reserved for Allen Brain Atlas location
+    nwbfile.add_electrode_column('relativex','electrode x-location on the probe')
+    nwbfile.add_electrode_column('relativey','electrode y-location on the probe')
+
     for idx in recording_electrodes:
         nwbfile.add_electrode(idx,
-                              x=float(xcoords[idx]),
-                              y=float(ycoords[idx]),
+                              x=np.nan,
+                              y=np.nan,
                               z=np.nan,
+                              relativex=float(xcoords[idx]),
+                              relativey=float(ycoords[idx]),
                               imp=np.nan,
-                              location='V1',
+                              location='medial entorhinal cortex',
                               filtering=filter_desc,
                               group=electrode_group)
+
+    print(nwbfile.electrodes[10])
 
     # Add information about each unit, termed 'cluster' in giocomo data
     # create new columns in unit table
@@ -199,7 +209,8 @@ def convert(dataTuple):
                          quality=cluster_quality[i],
                          waveform_mean=waveforms,
                          electrode_group=electrode_group)
-    print(nwbfile)
+
+    #print(nwbfile.units[4].VectorData)
 
     # Trying to add another Units table to hold the results of the automatic spike sorting
     spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
