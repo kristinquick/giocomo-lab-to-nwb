@@ -7,8 +7,8 @@ import pytz
 from pynwb import NWBFile, NWBHDF5IO
 from pynwb.misc import Units
 
-def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_species,
-             subject_weight, session_id, session_start_time, experimenter, experiment_description, institution,
+def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_weight, subject_species,
+             subject_brain_region, session_id, session_start_time, experimenter, experiment_description, institution,
              lab_name):
     """
     Read in the .mat file specified by input_file and convert to .nwb format.
@@ -25,10 +25,12 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
         important information specific to this subject that differentiates it from other members of it's species
     subject_sex : string
         Male or Female
-    subject_species : string
-        the name of the species of the subject
     subject_weight :
         the weight of the subject around the time of the experiment
+    subject_species : string
+        the name of the species of the subject
+    subject_brain_region : basestring
+        the name of the brain region where the electrode probe is recording from
     session_id: string
         human-readable ID# for the experiment sesssion that has a one-to-one relationship with a recording session
     session_start_time : datetime
@@ -39,6 +41,8 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
         what was happening during the experiment
     institution : string
         what institution was the experiment performed in
+    lab_name : string
+        the lab where the experiment was performed
 
     Returns
     -------
@@ -182,7 +186,7 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
 
     electrode_group = nwbfile.create_electrode_group(electrode_group_name,
                                                      description=electrode_group_description,
-                                                     location=electrode_group_location,
+                                                     location=subject_brain_region,
                                                      device=recording_device)
 
     # Add information about each electrode
