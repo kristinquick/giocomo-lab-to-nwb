@@ -10,7 +10,7 @@ import pytz
 import os.path
 import conversion
 
-datetime_iso = ''
+#datetime_iso = ''
 # setup Stanford timezone timezones
 timezone_cali = pytz.timezone('US/Pacific')
 
@@ -39,7 +39,7 @@ class guiMain():
         self.master.configure(background="#d3d3d3")
 
 
-        self.session_iso = ''
+        #self.session_iso = ''
 
 
         # Setup the drop down menus
@@ -89,9 +89,10 @@ class guiMain():
         self.enter_subject_id.grid(row=2, column=1, padx=(0, 0), pady=0, sticky="senw")
 
         # Subject Information - DOB
-        #today = datetime.date.today()
+        today = datetime.date.today()
         datetime_dob = datetime.datetime(2016, 10, 4, 0, 0, 0)
         datetime_dob_tz = timezone_cali.localize(datetime_dob)
+        self.dob = datetime_dob_tz
         self.dob_iso = datetime_dob_tz.isoformat()
         self.label_subject_dob = Label(self.FrameLeft, text='DOB:', background="#d3d3d3")
         self.label_subject_dob.grid(row=3, column=0, padx=20, pady=0, sticky='sne')
@@ -188,10 +189,10 @@ class guiMain():
         self.min_var = StringVar(value=self.min_choices[0])
         self.hour_var = StringVar(value=self.hour_choices[0])
 
-        #today = datetime.date.today()
-        #datetime_session = datetime.datetime(today.year, today.month, today.day, 0, 0, 0)
+        today = datetime.date.today()
         datetime_session = datetime.datetime(2017, 4, 4, 0, 0, 0)
         datetime_session_tz = timezone_cali.localize(datetime_session)
+        self.session = datetime_session_tz
         self.session_iso = datetime_session_tz.isoformat()
         self.label_session = Label(self.FrameLeft, text='Start Date & Time:', background="#d3d3d3")
         self.label_session.grid(row=11, column=0, padx=20, pady=0, sticky='sne')
@@ -282,20 +283,18 @@ class guiMain():
     def dob_selected(self):
         date_dob = self.cal_dob.selection_get()
         datetime_dob = datetime.datetime(date_dob.year, date_dob.month, date_dob.day, 0, 0, 0)
-        datetime_dob_tz = timezone_cali.localize(datetime_dob)
-        self.dob_iso = datetime_dob_tz.isoformat()
+        self.dob_iso = datetime_dob.isoformat()
         self.selected_dob.config(text=str(self.dob_iso))
         self.dob_date_picker.destroy()
 
     # Session Start Time Date and Time Picker
     def session_picker(self):
         today = datetime.date.today()
-        today_tz = timezone_cali.localize(today)
         self.session_date_picker = Tk()
         self.session_date_picker.iconbitmap('giocomo_lab.ico')
         self.session_date_picker.wm_title("Select Date")
         mindate = datetime.date(year=2000, month=1, day=1)
-        maxdate = today_tz + datetime.timedelta(days=1)
+        maxdate = today + datetime.timedelta(days=1)
         self.cal_session = Calendar(self.session_date_picker, font="Arial 14", selectmode='day', locale='en_US',
                             mindate=mindate, maxdate=maxdate, background='darkblue', foreground='white', borderwidth=2,
                             cursor="hand1", year=2018, month=2, day=5)
@@ -308,8 +307,7 @@ class guiMain():
     def session_selected(self):
         date_session = self.cal_session.selection_get()
         datetime_session = datetime.datetime(date_session.year, date_session.month, date_session.day, int(self.hour_var.get()), int(self.min_var.get()), 0)
-        datetime_session_tz = timezone_cali.localize(datetime_session)
-        self.session_iso = datetime_session_tz.isoformat()
+        self.session_iso = datetime_session.isoformat()
         self.session_date.config(text=str(self.session_iso))
         try:
             self.session_date_picker.destroy()
@@ -384,17 +382,16 @@ class guiMain():
 
     #RUN Button is selected
     def button_run(self):
-
         self.gio_tuple = (self.file_name.get(),
                          self.enter_subject_id.get(),
-                         self.dob_iso,
+                         self.dob,
                          self.enter_subject_desc.get(),
                          self.sex_var.get(),
                          self.enter_subject_weight.get(),
                          self.species_var.get(),
                          self.brain_var.get(),
                          self.enter_session_id.get(),
-                         self.session_iso,
+                         self.session,
                          self.experimenter_var.get() ,
                          self.description_var.get() ,
                          self.enter_session_inst.get(),

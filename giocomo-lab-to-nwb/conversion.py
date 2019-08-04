@@ -32,13 +32,13 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     subject_brain_region : basestring
         the name of the brain region where the electrode probe is recording from
     session_id: string
-        human-readable ID# for the experiment sesssion that has a one-to-one relationship with a recording session
+        human-readable ID# for the experiment session that has a one-to-one relationship with a recording session
     session_start_time : datetime
         date and time that the experiment started
     experimenter : string
         who ran the experiment, first and last name
     experiment_description : string
-        what was happening during the experiment
+        what task was being run during the session
     institution : string
         what institution was the experiment performed in
     lab_name : string
@@ -77,43 +77,32 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     # print variables inside matlab data
     print(matfile.keys())
 
-    # setup general experimental variables
-    # timezones
-    timezone_cali = pytz.timezone('US/Pacific')
-    timezone_pa = pytz.timezone('US/Eastern')
-
-    # create times with the correct time zone
-    start_time = datetime(2018, 4, 3, 11)  # start of experiment
-    start_time_tz = timezone_cali.localize(start_time)
-
     create_date = datetime.today()
-    create_date_tz = timezone_pa.localize(create_date)
+    timezone_cali = pytz.timezone('US/Pacific')
+    create_date_tz = timezone_cali.localize(create_date)
 
     uuid_identifier = uuid.uuid1()
 
     # Create NWB file
-    nwbfile = NWBFile(session_description='demonstrate NWBFile basics',  # required
+    nwbfile = NWBFile(session_description=experiment_description,  # required
                       identifier=uuid_identifier.hex,  # required
                       session_id=session_id,
                       experiment_description=experiment_description,
                       experimenter=experimenter,
                       institution=institution,
                       lab=lab_name,
-                      session_start_time=start_time_tz,  # required
+                      session_start_time=session_start_time,  # required
                       file_create_date=create_date_tz)  # optional
     print(nwbfile)
 
     # add information about the subject of the experiment
     from pynwb.file import Subject
 
-    birthday = datetime(2019, 1, 1)  # start of experiment
-    birthday_tz = timezone_cali.localize(birthday)
-
     experiment_subject = Subject(subject_id=subject_id,
                                  species=subject_species,
                                  description=subject_description,
-                                 date_of_birth=birthday_tz,
-                                 weight='11',
+                                 date_of_birth=subject_date_of_birth,
+                                 weight=subject_weight,
                                  sex=subject_sex)
 
     nwbfile.subject = experiment_subject
