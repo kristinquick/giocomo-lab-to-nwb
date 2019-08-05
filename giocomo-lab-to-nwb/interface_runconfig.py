@@ -5,7 +5,7 @@ import conversion
 def yaml_as_python(val):
     """Convert YAML to dict"""
     try:
-        return yaml.load_all(val)
+        return yaml.safe_load_all(val)
     except yaml.YAMLError as exc:
         return exc
 
