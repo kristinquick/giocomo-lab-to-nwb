@@ -7,5 +7,5 @@ setup(
     author='Kristin Quick',
     author_email='kristin@scenda.io',
     packages=['giocomo-lab-to-nwb'],
-    install_requires=['pynwb','numpy','scipy','hdf5storage','datetime','pytz','uuid','tkcalendar']
+    install_requires=['pynwb','numpy','scipy','hdf5storage','datetime','pytz','uuid','tkcalendar','PyYAML']
 )

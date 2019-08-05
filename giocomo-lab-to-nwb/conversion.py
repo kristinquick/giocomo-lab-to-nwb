@@ -71,7 +71,12 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     matfile = hdf5storage.loadmat(input_file)
 
     # output path for nwb data
-    out_path = 'D:\\Data\\scenda\\giocomo\\npI5_0417_baseline_1.nwb'
+    def replace_last(source_string, replace_what, replace_with):
+        head, _sep, tail = source_string.rpartition(replace_what)
+        return head + replace_with + tail
+    outpath = replace_last(input_file,'.mat','.nwb')
+    print(outpath)
+    #out_path = 'D:\\Data\\scenda\\giocomo\\npI5_0417_baseline_1.nwb'
     #out_path = 'G:\\My Drive\\Giocomo\\data\\npI5_0417_baseline_1.nwb'
 
     # print variables inside matlab data
@@ -81,6 +86,16 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     timezone_cali = pytz.timezone('US/Pacific')
     create_date_tz = timezone_cali.localize(create_date)
 
+    # if loading data from config.yaml, convert string dates into datetime
+    if isinstance(session_start_time,str):
+        session_start_time = datetime.strptime(session_start_time, '%B %d, %Y %I:%M%p')
+        session_start_time = timezone_cali.localize(session_start_time)
+
+    if isinstance(subject_date_of_birth,str):
+        subject_date_of_birth = datetime.strptime(subject_date_of_birth, '%B %d, %Y %I:%M%p')
+        subject_date_of_birth = timezone_cali.localize(subject_date_of_birth)
+
+    # create unique identifier for this experimental session
     uuid_identifier = uuid.uuid1()
 
     # Create NWB file
@@ -256,5 +271,6 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     print(nwbfile)
 
 
-    with NWBHDF5IO(out_path, 'w') as io:
+    with NWBHDF5IO(outpath, 'w') as io:
         io.write(nwbfile)
+        print('saved',outpath)

@@ -1,5 +1,3 @@
-
-
 from tkinter import *
 from tkcalendar import Calendar, DateEntry
 from tkinter.simpledialog import askstring
@@ -7,8 +5,9 @@ import datetime
 from tkinter.filedialog import askopenfilename
 import tkinter.messagebox
 import pytz
-import os.path
 import conversion
+import os.path
+
 
 #datetime_iso = ''
 # setup Stanford timezone timezones
@@ -396,6 +395,7 @@ class guiMain():
                          self.description_var.get() ,
                          self.enter_session_inst.get(),
                          self.enter_session_lab.get())
+        print(self.gio_tuple)
         conversion.convert(*self.gio_tuple)
 
 
