@@ -6,16 +6,29 @@ import numpy as np
 import pytz
 from pynwb import NWBFile, NWBHDF5IO
 from pynwb.misc import Units
+from pynwb.file import Subject
+from pynwb.behavior import Position, BehavioralEvents
 
-def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_weight, subject_species,
-             subject_brain_region, session_id, session_start_time, experimenter, experiment_description, institution,
-             lab_name):
+
+def convert(input_file, session_start_time,
+            subject_date_of_birth,
+            subject_id='L5',
+            subject_description='wild-type',
+            subject_sex='M',
+            subject_weight='11.6g',
+            subject_species='Mus musculus',
+            subject_brain_region='Medial Entorhinal Cortex',
+            session_id='npI5_0417_baseline_1',
+            experimenter='Kei Masuda',
+            experiment_description='Virtual Hallway Task',
+            institution='Stanford University School of Medicine',
+            lab_name='Giocomo Lab'):
     """
     Read in the .mat file specified by input_file and convert to .nwb format.
 
     Parameters
     ----------
-    input_file : ndarray (..., n_channels, n_time)
+    input_file : np.ndarray (..., n_channels, n_time)
         the .mat file to be converted
     subject_id : string
         the unique subject ID number for the subject of the experiment
@@ -50,31 +63,14 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
         The contents of the .mat file converted into the NWB format.  The nwbfile is saved to disk using NDWHDF5
     """
 
-
-    # General experiment settings
-    print("input file = ", input_file)
-    print("subject id = ", subject_id)
-    print("subject date of birth = ", subject_date_of_birth)
-    print("subject_description = ", subject_description)
-    print("subject sex = ", subject_sex)
-    print("subject species = ", subject_species)
-    print("subject weight = ", subject_weight)
-    print("session id = ", session_id)
-    print("session start time = ", session_start_time)
-    print("experimenter = ", experimenter)
-    print("experiment_description = ", experiment_description)
-    print("institution = ", institution)
-    print("lab name = ", lab_name, "\n")
-
     # input matlab data
-    #matfile = hdf5storage.loadmat('G:\\My Drive\\Giocomo\\data\\npI5_0417_baseline_1.mat')
     matfile = hdf5storage.loadmat(input_file)
 
     # output path for nwb data
     def replace_last(source_string, replace_what, replace_with):
         head, _sep, tail = source_string.rpartition(replace_what)
         return head + replace_with + tail
-    outpath = replace_last(input_file,'.mat','.nwb')
+    outpath = replace_last(input_file, '.mat', '.nwb')
     print(outpath)
     #out_path = 'D:\\Data\\scenda\\giocomo\\npI5_0417_baseline_1.nwb'
     #out_path = 'G:\\My Drive\\Giocomo\\data\\npI5_0417_baseline_1.nwb'
@@ -85,15 +81,6 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     create_date = datetime.today()
     timezone_cali = pytz.timezone('US/Pacific')
     create_date_tz = timezone_cali.localize(create_date)
-
-    # if loading data from config.yaml, convert string dates into datetime
-    if isinstance(session_start_time,str):
-        session_start_time = datetime.strptime(session_start_time, '%B %d, %Y %I:%M%p')
-        session_start_time = timezone_cali.localize(session_start_time)
-
-    if isinstance(subject_date_of_birth,str):
-        subject_date_of_birth = datetime.strptime(subject_date_of_birth, '%B %d, %Y %I:%M%p')
-        subject_date_of_birth = timezone_cali.localize(subject_date_of_birth)
 
     # create unique identifier for this experimental session
     uuid_identifier = uuid.uuid1()
@@ -108,10 +95,8 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                       lab=lab_name,
                       session_start_time=session_start_time,  # required
                       file_create_date=create_date_tz)  # optional
-    print(nwbfile)
 
     # add information about the subject of the experiment
-    from pynwb.file import Subject
 
     experiment_subject = Subject(subject_id=subject_id,
                                  species=subject_species,
@@ -121,8 +106,6 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                                  sex=subject_sex)
 
     nwbfile.subject = experiment_subject
-
-    print(nwbfile.subject)
 
     # Adding trial information
     nwbfile.add_trial_column('trial_contrast', 'visual contrast of the maze through which the mouse is running')
@@ -136,21 +119,20 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                           stop_time=trial_times[-1],
                           trial_contrast=matfile['trial_contrast'][num-1])
 
-    print(nwbfile)
 
     # Add mouse position inside:
-    from pynwb.behavior import Position
-
     position = Position()
     position_virtual = np.ravel(matfile['posx'])
     # position inside the virtual environment
     position.create_spatial_series(name='Position',
                                    data=position_virtual,
-                                   timestamps = position_time,
-                                   reference_frame='The start of the trial, which begins at the start of the virtual hallway.',
+                                   timestamps=position_time,
+                                   reference_frame='The start of the trial, which begins at the start of the virtual '
+                                                   'hallway.',
                                    conversion=0.01,
                                    description='Mouse location in the virtual hallway.',
-                                   comments='The values should be >0 and <400cm. Values greater than 400cm mean that the mouse briefly exited the maze.',)
+                                   comments='The values should be >0 and <400cm. Values greater than 400cm mean that '
+                                            'the mouse briefly exited the maze.',)
 
     # physical position on the mouse wheel
     physical_posx = position_virtual
@@ -166,13 +148,8 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                                    description='Physical location on the wheel since the beginning of the trial.',
                                    comments='Physical location found by dividing the virtual position by the "trial_gain"')
     nwbfile.add_acquisition(position)
-    print(nwbfile)
-
-    print(nwbfile.acquisition['Position'].get_spatial_series('PhysicalPosition'))
 
     # Add timing of lick events, as well as mouse's virtual position during lick event
-    from pynwb.behavior import BehavioralEvents
-
     lick_events = BehavioralEvents()
     lick_events.create_timeseries('LickEvents',
                                   data=np.ravel(matfile['lickx']),
@@ -180,7 +157,6 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                                   unit='unitless sensor values',
                                   description = 'Mouse location in virtual hallway during a lick.')
     nwbfile.add_acquisition(lick_events)
-    print(nwbfile)
 
     # Add the recording device, a neuropixel probe
     recording_device = nwbfile.create_device(name='neuropixel_probes')
@@ -222,7 +198,6 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                               filtering=filter_desc,
                               group=electrode_group)
 
-    print(nwbfile.electrodes[10])
 
     # Add information about each unit, termed 'cluster' in giocomo data
     # create new columns in unit table
@@ -251,7 +226,7 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
 
     # create TemplateUnits units table
     template_units = Units(name='TemplateUnits',
-                          description='units assigned during automatic spike sorting')
+                           description='units assigned during automatic spike sorting')
 
     for i, spike_template_id in enumerate(spike_template_ids):
         template_spike_times = spike_times[spike_templates == spike_template_id]
@@ -260,17 +235,11 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                                 electrode_group=electrode_group)
 
     # add TemplateUnits table to a processing module
-    from pynwb import ProcessingModule
-    spike_template_module = ProcessingModule(name='TemplateUnits',
-                                             description='units assigned during automatic spike sorting')
+    spike_template_module = nwbfile.create_processing_module(
+        name='TemplateUnits', description='units assigned during automatic spike sorting')
 
-    # add spike_template_module (processing module) to the NWB file
     spike_template_module.add(template_units)
-    nwbfile.add_processing_module(spike_template_module)
-
-    print(nwbfile)
-
 
     with NWBHDF5IO(outpath, 'w') as io:
         io.write(nwbfile)
-        print('saved',outpath)
+        print('saved', outpath)
