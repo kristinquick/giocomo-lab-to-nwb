@@ -8,7 +8,7 @@ from pynwb import NWBFile, NWBHDF5IO
 from pynwb.misc import Units
 
 def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_weight, subject_species,
-             subject_brain_region, session_id, session_start_time, experimenter, experiment_description, institution,
+             subject_brain_region, surgery, session_id, session_start_time, experimenter, experiment_description, institution,
              lab_name):
     """
     Read in the .mat file specified by input_file and convert to .nwb format.
@@ -31,6 +31,8 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
         the name of the species of the subject
     subject_brain_region : basestring
         the name of the brain region where the electrode probe is recording from
+    surgery : str
+        information about the subject's surgery to implant electrodes
     session_id: string
         human-readable ID# for the experiment session that has a one-to-one relationship with a recording session
     session_start_time : datetime
@@ -59,6 +61,7 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     print("subject sex = ", subject_sex)
     print("subject species = ", subject_species)
     print("subject weight = ", subject_weight)
+    print("surgery info = ", surgery)
     print("session id = ", session_id)
     print("session start time = ", session_start_time)
     print("experimenter = ", experimenter)
@@ -104,6 +107,7 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
                       session_id=session_id,
                       experiment_description=experiment_description,
                       experimenter=experimenter,
+                      surgery=surgery,
                       institution=institution,
                       lab=lab_name,
                       session_start_time=session_start_time,  # required
@@ -144,12 +148,15 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     position = Position()
     position_virtual = np.ravel(matfile['posx'])
     # position inside the virtual environment
+    sampling_rate = 1/(position_time[1] - position_time[0])
+    print(sampling_rate)
     position.create_spatial_series(name='Position',
                                    data=position_virtual,
-                                   timestamps = position_time,
+                                   starting_time=position_time[0],
+                                   rate=sampling_rate,
                                    reference_frame='The start of the trial, which begins at the start of the virtual hallway.',
                                    conversion=0.01,
-                                   description='Mouse location in the virtual hallway.',
+                                   description='Subject position in the virtual hallway.',
                                    comments='The values should be >0 and <400cm. Values greater than 400cm mean that the mouse briefly exited the maze.',)
 
     # physical position on the mouse wheel
@@ -160,10 +167,11 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
 
     position.create_spatial_series(name='PhysicalPosition',
                                    data=physical_posx,
-                                   timestamps=position_time,
+                                   starting_time=position_time[0],
+                                   rate=sampling_rate,
                                    reference_frame='Location on wheel re-referenced to zero at the start of each trial.',
                                    conversion=0.01,
-                                   description='Physical location on the wheel since the beginning of the trial.',
+                                   description='Physical location on the wheel measured since the beginning of the trial.',
                                    comments='Physical location found by dividing the virtual position by the "trial_gain"')
     nwbfile.add_acquisition(position)
     print(nwbfile)
@@ -177,8 +185,8 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     lick_events.create_timeseries('LickEvents',
                                   data=np.ravel(matfile['lickx']),
                                   timestamps=np.ravel(matfile['lickt']),
-                                  unit='unitless sensor values',
-                                  description = 'Mouse location in virtual hallway during a lick.')
+                                  unit='centimeter',
+                                  description = 'Subject position in virtual hallway during the lick.')
     nwbfile.add_acquisition(lick_events)
     print(nwbfile)
 
@@ -246,12 +254,12 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
     print(nwbfile.units['waveform_mean'][4].shape)
 
     # Trying to add another Units table to hold the results of the automatic spike sorting
-    spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
-    spike_template_ids = np.unique(spike_templates)
-
     # create TemplateUnits units table
     template_units = Units(name='TemplateUnits',
-                          description='units assigned during automatic spike sorting')
+                           description='units assigned during automatic spike sorting')
+
+    spike_templates = np.ravel(matfile['sp'][0]['spikeTemplates'][0])
+    spike_template_ids = np.unique(spike_templates)
 
     for i, spike_template_id in enumerate(spike_template_ids):
         template_spike_times = spike_times[spike_templates == spike_template_id]
@@ -261,11 +269,12 @@ def convert(input_file, subject_id, subject_date_of_birth, subject_description, 
 
     # add TemplateUnits table to a processing module
     from pynwb import ProcessingModule
-    spike_template_module = ProcessingModule(name='TemplateUnits',
+    spike_template_module = ProcessingModule(name='ecephys',
                                              description='units assigned during automatic spike sorting')
 
-    # add spike_template_module (processing module) to the NWB file
+    # add template_units table to processing module
     spike_template_module.add(template_units)
+    # add spike_template_module to the NWB file
     nwbfile.add_processing_module(spike_template_module)
 
     print(nwbfile)
