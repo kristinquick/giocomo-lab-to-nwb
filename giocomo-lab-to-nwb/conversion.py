@@ -9,11 +9,8 @@ from pynwb.misc import Units
 from pynwb.file import Subject
 from pynwb.behavior import Position, BehavioralEvents
 
-#def convert(input_file, subject_id, subject_date_of_birth, subject_description, subject_sex, subject_weight, subject_species,
-#             subject_brain_region, surgery, session_id, session_start_time, experimenter, experiment_description, institution,
-#             lab_name):
-
-def convert(input_file, session_start_time,
+def convert(input_file,
+            session_start_time,
             subject_date_of_birth,
             subject_id='L5',
             subject_description='wild-type',
@@ -21,6 +18,7 @@ def convert(input_file, session_start_time,
             subject_weight='11.6g',
             subject_species='Mus musculus',
             subject_brain_region='Medial Entorhinal Cortex',
+            surgery='Probe: +/-3.3mm ML, 0.2mm A of sinus, then as deep as possible',
             session_id='npI5_0417_baseline_1',
             experimenter='Kei Masuda',
             experiment_description='Virtual Hallway Task',
@@ -127,7 +125,8 @@ def convert(input_file, session_start_time,
     trial = np.ravel(matfile['trial'])
     trial_nums = np.unique(trial)
     position_time = np.ravel(matfile['post'])
-    # matlab trial numbers start at 1. To correctly index trial_contract vector, subtracting 1 from 'num' so index starts at 0
+    # matlab trial numbers start at 1. To correctly index trial_contract vector,
+    # subtracting 1 from 'num' so index starts at 0
     for num in trial_nums:
         trial_times = position_time[trial == num]
         nwbfile.add_trial(start_time=trial_times[0],
@@ -145,10 +144,12 @@ def convert(input_file, session_start_time,
                                    data=position_virtual,
                                    starting_time=position_time[0],
                                    rate=sampling_rate,
-                                   reference_frame='The start of the trial, which begins at the start of the virtual hallway.',
+                                   reference_frame='The start of the trial, which begins at the start '
+                                                   'of the virtual hallway.',
                                    conversion=0.01,
                                    description='Subject position in the virtual hallway.',
-                                   comments='The values should be >0 and <400cm. Values greater than 400cm mean that the mouse briefly exited the maze.',)
+                                   comments='The values should be >0 and <400cm. Values greater than '
+                                            '400cm mean that the mouse briefly exited the maze.',)
 
     # physical position on the mouse wheel
     physical_posx = position_virtual
@@ -160,10 +161,13 @@ def convert(input_file, session_start_time,
                                    data=physical_posx,
                                    starting_time=position_time[0],
                                    rate=sampling_rate,
-                                   reference_frame='Location on wheel re-referenced to zero at the start of each trial.',
+                                   reference_frame='Location on wheel re-referenced to zero '
+                                                   'at the start of each trial.',
                                    conversion=0.01,
-                                   description='Physical location on the wheel measured since the beginning of the trial.',
-                                   comments='Physical location found by dividing the virtual position by the "trial_gain"')
+                                   description='Physical location on the wheel measured '
+                                               'since the beginning of the trial.',
+                                   comments='Physical location found by dividing the '
+                                            'virtual position by the "trial_gain"')
     nwbfile.add_acquisition(position)
 
     # Add timing of lick events, as well as mouse's virtual position during lick event
@@ -251,14 +255,12 @@ def convert(input_file, session_start_time,
                                 spike_times=template_spike_times,
                                 electrode_group=electrode_group)
 
-    # add TemplateUnits table to a processing module
+    # create ecephys processing module
     spike_template_module = nwbfile.create_processing_module(
-        name='TemplateUnits', description='units assigned during automatic spike sorting')
+        name='ecephys', description='units assigned during automatic spike sorting')
 
     # add template_units table to processing module
     spike_template_module.add(template_units)
-    # add spike_template_module to the NWB file
-    nwbfile.add_processing_module(spike_template_module)
 
     print(nwbfile)
 

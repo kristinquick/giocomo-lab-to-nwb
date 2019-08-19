@@ -94,7 +94,7 @@ class guiMain():
         today = datetime.date.today()
         datetime_dob = datetime.datetime(2016, 10, 4, 0, 0, 0)
         datetime_dob_tz = timezone_cali.localize(datetime_dob)
-        self.dob = datetime_dob_tz
+        self.datetime_dob = datetime_dob_tz
         self.dob_iso = datetime_dob_tz.isoformat()
         self.label_subject_dob = Label(self.FrameLeft, text='DOB:', background="#d3d3d3")
         self.label_subject_dob.grid(row=3, column=0, padx=20, pady=0, sticky='sne')
@@ -189,7 +189,7 @@ class guiMain():
         today = datetime.date.today()
         datetime_session = datetime.datetime(2017, 4, 4, 0, 0, 0)
         datetime_session_tz = timezone_cali.localize(datetime_session)
-        self.session = datetime_session_tz
+        self.datetime_session = datetime_session_tz
         self.session_iso = datetime_session_tz.isoformat()
         self.label_session = Label(self.FrameLeft, text='Start Date & Time:', background="#d3d3d3")
         self.label_session.grid(row=12, column=0, padx=20, pady=0, sticky='sne')
@@ -266,7 +266,7 @@ class guiMain():
         date_dob = self.cal_dob.selection_get()
         datetime_dob = datetime.datetime(date_dob.year, date_dob.month, date_dob.day, 0, 0, 0)
         datetime_dob_tz = timezone_cali.localize(datetime_dob)
-        self.dob = datetime_dob_tz
+        self.datetime_dob = datetime_dob
         self.dob_iso = datetime_dob_tz.isoformat()
         self.selected_dob.config(text=str(self.dob_iso))
         self.dob_date_picker.destroy()
@@ -361,7 +361,7 @@ class guiMain():
         date_session = self.cal_session.selection_get()
         datetime_session = datetime.datetime(date_session.year, date_session.month, date_session.day, int(self.session_hour.get()), int(self.session_minute.get()), 0)
         datetime_session_tz = timezone_cali.localize(datetime_session)
-        self.session = datetime_session_tz
+        self.datetime_session = datetime_session_tz
         self.session_iso = datetime_session_tz.isoformat()
         self.session_date.config(text=str(self.session_iso))
         try:
@@ -435,23 +435,27 @@ class guiMain():
 
     #RUN Button is selected
     def button_run(self):
-        self.gio_tuple = (self.file_name.get(),
-                         self.enter_subject_id.get(),
-                         self.dob,
-                         self.enter_subject_desc.get(),
-                         self.sex_var.get(),
-                         self.enter_subject_weight.get(),
-                         self.species_var.get(),
-                         self.brain_var.get(),
-                         self.enter_subject_surgery.get(),
-                         self.enter_session_id.get(),
-                         self.session,
-                         self.experimenter_var.get() ,
-                         self.description_var.get() ,
-                         self.enter_session_inst.get(),
-                         self.enter_session_lab.get())
-        print(self.gio_tuple)
-        conversion.convert(*self.gio_tuple)
+        self.gio_dict = {
+            "input_file": self.file_name.get(),
+            "subject_id": self.enter_subject_id.get(),
+            "subject_date_of_birth": self.datetime_dob,
+            "subject_description": self.enter_subject_desc.get(),
+            "subject_sex": self.sex_var.get(),
+            "subject_weight": self.enter_subject_weight.get(),
+            "surgery": self.enter_subject_surgery.get(),
+            "subject_brain_region": self.brain_var.get(),
+            "subject_species": self.species_var.get(),
+            "session_id": self.enter_session_id.get(),
+            "session_start_time": self.datetime_session,
+            "experimenter": self.experimenter_var.get(),
+            "experiment_description": self.description_var.get() ,
+            "institution": self.enter_session_inst.get(),
+            "lab_name": self.enter_session_lab.get(),
+
+        }
+
+        print(self.gio_dict["subject_id"])
+        conversion.convert(**self.gio_dict)
 
 
 
