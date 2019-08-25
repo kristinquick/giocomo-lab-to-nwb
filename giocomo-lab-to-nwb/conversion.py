@@ -74,12 +74,6 @@ def convert(input_file,
         head, _sep, tail = source_string.rpartition(replace_what)
         return head + replace_with + tail
     outpath = replace_last(input_file, '.mat', '.nwb')
-    print(outpath)
-    #out_path = 'D:\\Data\\scenda\\giocomo\\npI5_0417_baseline_1.nwb'
-    #out_path = 'G:\\My Drive\\Giocomo\\data\\npI5_0417_baseline_1.nwb'
-
-    # print variables inside matlab data
-    print(matfile.keys())
 
     create_date = datetime.today()
     timezone_cali = pytz.timezone('US/Pacific')
@@ -110,7 +104,6 @@ def convert(input_file,
                       file_create_date=create_date_tz)  # optional
 
     # add information about the subject of the experiment
-
     experiment_subject = Subject(subject_id=subject_id,
                                  species=subject_species,
                                  description=subject_description,
@@ -131,7 +124,7 @@ def convert(input_file,
         trial_times = position_time[trial == num]
         nwbfile.add_trial(start_time=trial_times[0],
                           stop_time=trial_times[-1],
-                          trial_contrast=matfile['trial_contrast'][num-1])
+                          trial_contrast=matfile['trial_contrast'][num-1][0])
 
 
     # Add mouse position inside:
@@ -139,7 +132,6 @@ def convert(input_file,
     position_virtual = np.ravel(matfile['posx'])
     # position inside the virtual environment
     sampling_rate = 1/(position_time[1] - position_time[0])
-    print(sampling_rate)
     position.create_spatial_series(name='Position',
                                    data=position_virtual,
                                    starting_time=position_time[0],
@@ -239,7 +231,6 @@ def convert(input_file,
                          waveform_mean=waveforms,
                          electrode_group=electrode_group)
 
-    print(nwbfile.units['waveform_mean'][4].shape)
 
     # Trying to add another Units table to hold the results of the automatic spike sorting
     # create TemplateUnits units table
@@ -263,7 +254,8 @@ def convert(input_file,
     spike_template_module.add(template_units)
 
     print(nwbfile)
-
+    print('converted to NWB:N')
+    print('saving ...')
 
     with NWBHDF5IO(outpath, 'w') as io:
         io.write(nwbfile)
