@@ -41,7 +41,20 @@ class guiMain():
         self.master.configure(background="#d3d3d3")
 
 
-        #self.session_iso = ''
+        self.session_iso = ''
+        #check if drop down choice files exists
+        if not os.path.isfile('species.txt'):
+            with open ('species.txt','w') as new_file :
+                new_file.write('Mice\n')
+        if not os.path.isfile('brain_regions.txt'):
+                with open('brain_regions.txt', 'w') as new_file:
+                 new_file.write('Medial Entorhinal Cortex\n')
+        if not os.path.isfile('descriptions.txt'):
+                with open('descriptions.txt', 'w') as new_file:
+                 new_file.write('Virtual Hallway Task\n')
+        if not os.path.isfile('experimenters.txt'):
+                with open('experimenters.txt', 'w') as new_file:
+                     new_file.write('guest\n')
 
 
         # Setup the drop down menus
@@ -92,7 +105,7 @@ class guiMain():
 
         # Subject Information - DOB
         today = datetime.date.today()
-        datetime_dob = datetime.datetime(2016, 10, 4, 0, 0, 0)
+        datetime_dob = datetime.datetime(today.year, today.month, today.day, 0, 0, 0)
         datetime_dob_tz = timezone_cali.localize(datetime_dob)
         self.datetime_dob = datetime_dob_tz
         self.dob_iso = datetime_dob_tz.isoformat()
@@ -163,14 +176,16 @@ class guiMain():
         self.select_brain = OptionMenu(self.FrameLeft, self.brain_var, *self.brain_choices)
         self.select_brain.configure(width=20, height=1)
         self.select_brain.grid(row=8, column=1, padx=(0, 0), pady=5, sticky="snw")
-        self.edit_brain_button = Button(self.FrameLeft, text=" Add ", command=self.button_add_brain, background="#d3d3d3")
+        self.edit_brain_button = Button(self.FrameLeft, text=" Add ", command=self.button_add_brain,
+                                          background="#d3d3d3")
         self.edit_brain_button.grid(row=8, column=1, padx=0, pady=5, sticky='NES')
 
         # Subject Information - Surgery
         surgery_default_desc = 'Probe: +/-3.3mm ML, 0.2mm A of sinus, then as deep as possible'
         self.label_subject_surgery = Label(self.FrameLeft, text='Surgery:', background="#d3d3d3")
         self.label_subject_surgery.grid(row=9, column=0, padx=20, pady=0, sticky='sne')
-        self.enter_subject_surgery = Entry(self.FrameLeft, width=40, textvariable=StringVar(value=surgery_default_desc))
+        self.enter_subject_surgery = Entry(self.FrameLeft, width=40,
+                                        textvariable=StringVar(value=surgery_default_desc))
         self.enter_subject_surgery.config(font='Helvetica 10 italic', state='normal')
         self.enter_subject_surgery.grid(row=9, column=1, padx=(0, 0), pady=5, sticky="senw")
 
@@ -180,20 +195,24 @@ class guiMain():
         self.label_session.grid(row=10, column=0, padx=20, pady=(10, 0), sticky='snw')
 
         # Session Information - ID
+        session_id_default = 'npI5_0417_baseline_1'
         self.label_session_id = Label(self.FrameLeft, text='ID:', background="#d3d3d3")
         self.label_session_id.grid(row=11, column=0, padx=20, pady=0, sticky='sne')
-        self.enter_session_id = Entry(self.FrameLeft, width=32, textvariable=StringVar(value='npI5_0417_baseline_1'))
+        self.enter_session_id = Entry(self.FrameLeft, width=32,
+                                     textvariable=StringVar(value=session_id_default))
         self.enter_session_id.config(font='Helvetica 10 italic', state='normal')
         self.enter_session_id.grid(row=11, column=1, padx=(0, 0), pady=5, sticky="senw")
 
+        # Session Information - Start Date & Time
         today = datetime.date.today()
-        datetime_session = datetime.datetime(2017, 4, 4, 0, 0, 0)
+        datetime_session = datetime.datetime(today.year, today.month, today.day, 0, 0, 0)
         datetime_session_tz = timezone_cali.localize(datetime_session)
         self.datetime_session = datetime_session_tz
         self.session_iso = datetime_session_tz.isoformat()
         self.label_session = Label(self.FrameLeft, text='Start Date & Time:', background="#d3d3d3")
         self.label_session.grid(row=12, column=0, padx=20, pady=0, sticky='sne')
-        self.session_button = Button(self.FrameLeft, text="Select", command=self.session_picker, background="#d3d3d3")
+        self.session_button = Button(self.FrameLeft, text="Select", command=self.session_picker,
+                                background="#d3d3d3")
         self.session_button.grid(row=12, column=1, padx=0, pady=5, sticky='NWS')
         self.session_date = Label(self.FrameLeft, text=self.session_iso, background="#d3d3d3", font='Helvetica 10 italic')
         self.session_date.grid(row=12, column=1, padx=80, pady=0, sticky='nsw')
@@ -221,6 +240,14 @@ class guiMain():
         self.description_choices = ['Virtual Hallway Task']
         self.select_description = OptionMenu(self.FrameLeft, self.description_var, *self.description_choices)
         self.select_description.config(width=20)
+        with open("descriptions.txt", "r") as original:
+            self.description_choices = []
+            for line in original:
+                line = line.strip('\n')
+                self.description_choices.append(line)
+        self.description_var = StringVar(value=self.description_choices[0])
+        self.select_description = OptionMenu(self.FrameLeft, self.description_var, *self.description_choices)
+        self.description_var.set(self.description_choices[0])
         self.select_description.grid(row=16, column=1, padx=(0, 0), pady=5, sticky="snw")
         self.edit_descr_button = Button(self.FrameLeft, text=" Add ", command=self.button_add_description, background="#d3d3d3")
         self.edit_descr_button.grid(row=16, column=1, padx=0, pady=5 , sticky='NES')
@@ -287,8 +314,8 @@ class guiMain():
         self.label_session_hour = Label(self.session_date_picker, text='Hour:')
         self.label_session_hour.grid(row=2, column=1, padx=100, pady=0, sticky='snw')
         self.session_hour = ttk.Combobox(self.session_date_picker,
-                                         value=["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
-                                                "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"])
+                value=["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11","12",
+                    "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"])
         self.session_hour.grid(row=2, column=1, padx=140, pady=0, sticky="swn")
         self.session_hour.state = "Readonly"
         self.session_hour.current(0)
@@ -297,12 +324,12 @@ class guiMain():
         self.label_session_minute = Label(self.session_date_picker, text='Minute:')
         self.label_session_minute.grid(row=2, column=1, padx=150, pady=0, sticky='sne')
         self.session_minute = ttk.Combobox(self.session_date_picker,
-                                           value=["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
-                                                  "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
-                                                  "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
-                                                  "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
-                                                  "40", "41", "42", "43", "44", "45", "46", "47", "88", "49",
-                                                  "50", "51", "52", "53", "54", "55", "56", "57", "58", "59"])
+                value=["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
+                       "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+                       "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+                       "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+                       "40", "41", "42", "43", "44", "45", "46", "47", "88", "49",
+                       "50", "51", "52", "53", "54", "55", "56", "57", "58", "59"])
         self.session_minute.grid(row=2, column=1, padx=95, pady=0, sticky="sen")
         self.session_minute.state = "Readonly"
         self.session_minute.current(0)
@@ -310,7 +337,7 @@ class guiMain():
 
 
         self.session_button = Button(self.session_date_picker, text="Done", command=self.session_selected,
-                                     background="#d3d3d3")
+                                background="#d3d3d3")
         self.session_button.grid(row=3, column=1, padx=200, pady=20, sticky='snw')
         self.session_button.config(state="normal")
         self.label_session_blank = Label(self.session_date_picker, text='')
@@ -322,10 +349,10 @@ class guiMain():
         self.session_date_time = Tk()
         self.session_date_time.title("Session Date and Time")
         self.session_date_time.iconbitmap('giocomo_lab.ico')
-        self.session_date_time.config(background="#d3d3d3")
+        self.session_date_time.config(background = "#d3d3d3")
 
-        self.session_date_time.hour_choices = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
-                                               "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
+        self.session_date_time.hour_choices = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12",
+                              "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
         self.session_date_time.hour_var = StringVar()
         self.session_date_time.hour_var.set(self.session_date_time.hour_choices[0])
         print(self.session_date_time.hour_var.get())
@@ -338,23 +365,22 @@ class guiMain():
         x = (sw - w) / 2
         y = (sh - h) / 2
         self.session_date_time.geometry('%dx%d+%d+%d' % (w, h, x, y))
-        self.session_date_button = Button(self.session_date_time, text="Select Date", command=self.dob_picker,
-                                          background="#d3d3d3")
+        self.session_date_button = Button(self.session_date_time, text="Select Date", command=self.dob_picker, background="#d3d3d3")
         self.session_date_button.grid(row=1, column=0, padx=10, pady=(10, 10), sticky='sW')
         self.label_session_hour = Label(self.session_date_time, text='Hour:', background="#d3d3d3")
         self.label_session_hour.grid(row=2, column=0, padx=10, pady=10, sticky='snw')
         self.session_hour = ttk.Combobox(self.session_date_time,
-                                         value=["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
-                                                "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"])
+                value = ["00", "01", "02", "03", "04", "05", "06", "07", "08","09", "10", "11", "12",
+                        "13", "14", "15", "16", "17", "18", "19", "20", "21","22", "23"])
         self.session_hour.grid(row=2, column=1, padx=5, pady=5, sticky="swn")
         self.session_hour.state = "Readonly"
         self.session_hour.current(0)
         self.session_hour.config(width=4)
         self.label_session_min = Label(self.session_date_time, text='Minute:', background="#d3d3d3")
         self.label_session_min.grid(row=3, column=0, padx=10, pady=10, sticky='snw')
-        self.date_time_done_button = Button(self.session_date_time, text="Done", command=self.session_selected,
-                                            background="#d3d3d3")
+        self.date_time_done_button = Button(self.session_date_time, text="Done", command=self.session_selected, background="#d3d3d3")
         self.date_time_done_button.grid(row=4, column=1, padx=10, pady=(0, 30), sticky='sW')
+
 
     # Session Date Selected - Save
     def session_selected(self):

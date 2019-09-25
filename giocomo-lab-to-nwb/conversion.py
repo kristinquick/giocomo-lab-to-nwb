@@ -17,6 +17,7 @@ def convert(input_file,
             subject_sex='M',
             subject_weight='11.6g',
             subject_species='Mus musculus',
+            subject_genotype='',
             subject_brain_region='Medial Entorhinal Cortex',
             surgery='Probe: +/-3.3mm ML, 0.2mm A of sinus, then as deep as possible',
             session_id='npI5_0417_baseline_1',
@@ -260,3 +261,22 @@ def convert(input_file,
     with NWBHDF5IO(outpath, 'w') as io:
         io.write(nwbfile)
         print('saved', outpath)
+
+if __name__ == '__main__':
+    default_data = dict(input_file='D:\\Data\\scenda\\giocomo\\npI5_0417_baseline_1.mat',
+                        session_start_time='April 4, 2017 10:00AM',
+                        subject_date_of_birth='April 4, 2016 12:15AM',
+                        subject_id='L5',
+                        subject_description='wild-type',
+                        subject_sex='M',
+                        subject_weight='11.6g',
+                        subject_species='Mus musculus',
+                        subject_genotype='',
+                        subject_brain_region='Medial Entorhinal Cortex',
+                        surgery='Probe: +/-3.3mm ML, 0.2mm A of sinus, then as deep as possible',
+                        session_id='npI5_0417_baseline_1',
+                        experimenter='Kei Masuda',
+                        experiment_description='Virtual Hallway Task',
+                        institution='Stanford University School of Medicine',
+                        lab_name='Giocomo Lab')
+    convert(**default_data)
